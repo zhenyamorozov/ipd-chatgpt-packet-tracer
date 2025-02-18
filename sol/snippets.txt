@@ -1,0 +1,109 @@
+IPD - ChatGPT API with Python and Packet Tracer
+
+Slides - explain OpenAI API
+
+Demo - explore API reference
+
+Demo - code a basic API script
+
+venv, pip install openai
+
+
+
+
+### Basic demo
+
+from openai import OpenAI
+
+client = OpenAI()
+
+completion = client.chat.completions.create(
+    model='gpt-3.5-turbo',
+    messages=[
+        {'role': 'developer', 'content': 'You keep your responses short and straight to the point. You always start your response with \'I believe,\''},
+        {'role': 'user', 'content': 'What is Cisco Packet Tracer?'}
+    ],
+    n=3
+)
+
+for choice in completion.choices:
+    print(choice.message.content)
+
+pass
+
+
+
+
+### GPT demo
+
+Review PT Controller
+
+Open get_info.py, review PT API code
+
+Add code (install requests):
+
+	from openai import OpenAI
+
+    gpt = OpenAI()
+    
+    prompt = f"""
+        Analyze the provided data about the network setup and generate a short description of the network. Try to be specific about the numbers and types of devices but do not invent any facts.
+        
+        Point out if there are any reachability issues in the network.
+        
+        Network devices:
+
+        {my_devices}
+        
+        Network hosts:
+        
+        {my_hosts}
+    
+    """
+    
+    print(prompt)
+
+    completion = gpt.chat.completions.create(
+        model='gpt-4o',
+        messages=[
+            {'role': 'developer', 'content': 'You are a qualified network engineer.'},
+            {'role': 'user', 'content': prompt}
+        ],
+    )
+
+    analysis = completion.choices[0].message.content
+    print(analysis)
+
+
+
+
+### Audio demo (install playsound)
+
+	import base64
+	import tempfile
+	from playsound import playsound
+
+	def play_mp3_data(mp3_data):
+		# Create a temporary file to write the MP3 data
+		with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
+			temp_file.write(mp3_data)
+			temp_file_path = temp_file.name
+		# Play the MP3 file
+		playsound(temp_file_path)
+
+    completion = gpt.chat.completions.create(
+        model='gpt-4o-audio-preview',
+        audio={"voice": "coral", "format": "mp3"},
+        messages=[
+            {'role': 'user', 'content': prompt}
+        ],
+        modalities=['text', 'audio']
+    )
+
+    # analysis = completion.choices[0].message.content
+    analysis = completion.choices[0].message.audio.transcript
+    print(analysis)
+    
+    mp3_data = base64.b64decode(completion.choices[0].message.audio.data)
+    play_mp3_data(mp3_data)
+	
