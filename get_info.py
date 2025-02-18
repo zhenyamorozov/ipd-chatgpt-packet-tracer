@@ -1,5 +1,10 @@
 import requests
 import json
+import base64
+import tempfile
+from playsound import playsound
+
+from openai import OpenAI
 
 # Function to obtain an authorization ticket
 def get_ticket(username, password):
@@ -25,6 +30,16 @@ def get_hosts(ticket):
     return resp.json()['response']
 
 
+def play_mp3_data(mp3_data):
+    # Create a temporary file to write the MP3 data
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
+        temp_file.write(mp3_data)
+        temp_file_path = temp_file.name
+    # Play the MP3 file
+    playsound(temp_file_path)
+
+
+
 # Main application code
 if __name__ == '__main__':
     admin_ticket = get_ticket('admin', 'admin')
@@ -41,4 +56,52 @@ if __name__ == '__main__':
 
     for host in my_hosts:
         print(host['id'], host['hostName'], host['hostType'], host['hostIp'])
+        
+    print('---')
+    
+    gpt = OpenAI()
+    
+    prompt = f'''
+    
+    Analyze the provided data about the network setup and generate a short description of the network. Try to be specific about the numbers and types of devices but do not invent any facts about the network.
+    
+    Point out if there are any reachability issues in the network.
+    
+    Provide the answer in Spanish.
+    
+    Network devices:
+    
+    {my_devices}
+    
+    Network hosts:
+    
+    {my_hosts}
+    
+    '''
+    
+    print(prompt)
+    
+    completion = gpt.chat.completions.create(
+        model='gpt-4o-audio-preview',
+        messages=[
+            {'role': 'developer', 'content': 'You are an experienced network engineer.'},
+            {'role': 'user', 'content': prompt}
+        ],
+        modalities=['text', 'audio'],
+        audio={"voice": "coral", "format": "mp3"}
+    )
+    
+    print('---')
+    
+    # print(completion.choices[0].message.content)
+    analysis = completion.choices[0].message.audio.transcript
+    print(analysis)
+    
+    mp3_data = base64.b64decode(completion.choices[0].message.audio.data)
+    play_mp3_data(mp3_data)
+
+
+    
+    pass
+    
 
